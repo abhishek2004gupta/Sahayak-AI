@@ -1,0 +1,52 @@
+# Node.js dependencies
+node_modules/
+
+# Python virtual environment
+sahayak-env/
+
+# Environment variables
+.env
+.env.*
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# VS Code settings (optional)
+.vscode/
+
+# Compiled source
+*.class
+
+# Coverage reports
+coverage/
+*.cover
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Test outputs
+*.mocha.json
+*.tox/
+.cache/
+.pytest_cache/

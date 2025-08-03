@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const router = express.Router();
 
 // Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyAHG-MmtVIqb99rF58zUisj8BGP2gyO9c8');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Generate response with Gemini

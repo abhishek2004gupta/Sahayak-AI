@@ -14,6 +14,17 @@ class ApiService {
     };
   }
 
+  async handleResponse(response) {
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Unauthorized');
+      }
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Request failed');
+    }
+    return response.json();
+  }
+
   // Authentication
   async login(username, password) {
     const response = await fetch(`${this.baseURL}/auth/login`, {
@@ -21,12 +32,12 @@ class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Login failed');
     }
-    
+
     return response.json();
   }
 
@@ -36,12 +47,12 @@ class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, email })
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Registration failed');
     }
-    
+
     return response.json();
   }
 
@@ -50,12 +61,8 @@ class ApiService {
     const response = await fetch(`${this.baseURL}/chat`, {
       headers: this.getAuthHeaders()
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch chats');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   async createChat(title = 'New Chat') {
@@ -64,12 +71,8 @@ class ApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ title })
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create chat');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   async updateChatTitle(chatId, title) {
@@ -78,12 +81,8 @@ class ApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ title })
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to update chat title');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   async deleteChat(chatId) {
@@ -91,24 +90,16 @@ class ApiService {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to delete chat');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   async getChatMessages(chatId) {
     const response = await fetch(`${this.baseURL}/chat/${chatId}/messages`, {
       headers: this.getAuthHeaders()
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch messages');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   async saveMessage(chatId, userMessage, aiResponse, modelUsed, tokenLength) {
@@ -122,12 +113,8 @@ class ApiService {
         tokenLength
       })
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to save message');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   async saveGeneratedImage(chatId, prompt, imagePath) {
@@ -136,30 +123,21 @@ class ApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify({ prompt, imagePath })
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to save image');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   // AI generation
   async generateResponse(prompt, maxTokens, model = 'gemini') {
     const endpoint = model === 'tinyllama' ? '/ai/tinyllama' : '/ai/generate';
-    
+
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, maxTokens })
     });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate response');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 
   // Image generation
@@ -169,14 +147,9 @@ class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, guidanceScale })
     });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate image');
-    }
-    
-    return response.json();
+
+    return this.handleResponse(response);
   }
 }
 
-export default new ApiService(); 
+export default new ApiService();

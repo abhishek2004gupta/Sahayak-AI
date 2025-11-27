@@ -18,7 +18,7 @@ const ContextProvider = (props) => {
   const [loading, setLoading] = useState(false);
   const [resultData, setResultData] = useState("");
   const [selectedTokenLength, setSelectedTokenLength] = useState(500);
-  
+
   // Model selection
   const [selectedModel, setSelectedModel] = useState('tinyllama'); // Default to TinyLlama
   const [currentChat, setCurrentChat] = useState(null);
@@ -34,15 +34,20 @@ const ContextProvider = (props) => {
     try {
       const token = localStorage.getItem('authToken');
       const userData = localStorage.getItem('userData');
-      
+
       if (token && userData) {
         const user = JSON.parse(userData);
         setUser(user);
-          setIsAuthenticated(true);
+        setIsAuthenticated(true);
         await loadUserChats();
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      if (error.message === 'Unauthorized') {
+        console.warn('Session expired during auth check, logging out...');
+        logout();
+      } else {
+        console.error('Auth check failed:', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +57,7 @@ const ContextProvider = (props) => {
     try {
       const response = await apiService.login(username, password);
       setUser(response.user);
-        setIsAuthenticated(true);
+      setIsAuthenticated(true);
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('userData', JSON.stringify(response.user));
       await loadUserChats();
@@ -89,13 +94,18 @@ const ContextProvider = (props) => {
       const chats = await apiService.getUserChats();
       setUserChats(chats);
     } catch (error) {
-      console.error('Error loading chats:', error);
+      if (error.message === 'Unauthorized') {
+        console.warn('Session expired loading chats, logging out...');
+        logout();
+      } else {
+        console.error('Error loading chats:', error);
+      }
     }
   };
 
   const createNewChat = async () => {
     if (!user) return;
-    
+
     try {
       const chat = await apiService.createChat();
       setCurrentChat(chat);
@@ -103,7 +113,11 @@ const ContextProvider = (props) => {
       await loadUserChats();
       return chat;
     } catch (error) {
-      console.error('Error creating chat:', error);
+      if (error.message === 'Unauthorized') {
+        logout();
+      } else {
+        console.error('Error creating chat:', error);
+      }
     }
   };
 
@@ -112,8 +126,8 @@ const ContextProvider = (props) => {
       const messages = await apiService.getChatMessages(chatId);
       const chat = userChats.find(c => c.id === chatId);
       if (chat) {
-      setCurrentChat(chat);
-      setChatMessages(messages);
+        setCurrentChat(chat);
+        setChatMessages(messages);
         setShowResult(true); // Show the chat interface
       }
     } catch (error) {
@@ -158,9 +172,9 @@ const ContextProvider = (props) => {
 
     setLoading(true);
     setShowResult(true);
-    
+
     let currentPrompt;
-    
+
     if (prompt !== undefined) {
       currentPrompt = prompt;
     } else {
@@ -184,9 +198,9 @@ const ContextProvider = (props) => {
           newResponse += "<b>" + responseArray[i] + "</b>";
         }
       }
-      
+
       let formattedResponse = newResponse.split("*").join("</br>");
-      
+
       // Save message to database
       if (currentChat) {
         await apiService.saveMessage(
@@ -196,7 +210,7 @@ const ContextProvider = (props) => {
           selectedModel,
           selectedTokenLength
         );
-        
+
         // Update chat title with first message if it's the first message
         if (chatMessages.length === 0) {
           const shortTitle = currentPrompt.length > 30 ? currentPrompt.substring(0, 30) + '...' : currentPrompt;
@@ -204,14 +218,18 @@ const ContextProvider = (props) => {
           // Reload user chats to update sidebar
           await loadUserChats();
         }
-        
+
         await loadChat(currentChat.id);
       }
     } catch (error) {
-      console.error('Error generating response:', error);
-      alert("Sorry, I encountered an error. Please try again.");
+      if (error.message === 'Unauthorized') {
+        logout();
+      } else {
+        console.error('Error generating response:', error);
+        alert("Sorry, I encountered an error. Please try again.");
+      }
     }
-    
+
     setLoading(false);
     setInput("");
   };
@@ -223,7 +241,7 @@ const ContextProvider = (props) => {
 
     try {
       const result = await imageGenerationService.generateImage(prompt);
-      
+
       // Save image to database if we have a chat
       if (currentChat && result.url) {
         await apiService.saveGeneratedImage(currentChat.id, prompt, result.url);
@@ -232,8 +250,12 @@ const ContextProvider = (props) => {
 
       return result;
     } catch (error) {
-      console.error('Error generating image:', error);
-      throw new Error('Failed to generate image');
+      if (error.message === 'Unauthorized') {
+        logout();
+      } else {
+        console.error('Error generating image:', error);
+        throw new Error('Failed to generate image');
+      }
     }
   };
 
@@ -245,7 +267,7 @@ const ContextProvider = (props) => {
     login,
     register,
     logout,
-    
+
     // Chat state
     prevPrompts,
     setPrevPrompts,
@@ -258,13 +280,13 @@ const ContextProvider = (props) => {
     input,
     setInput,
     newChat,
-    
+
     // Model selection
     selectedTokenLength,
     setSelectedTokenLength,
     selectedModel,
     setSelectedModel,
-    
+
     // Chat management
     currentChat,
     userChats,
@@ -272,10 +294,10 @@ const ContextProvider = (props) => {
     createNewChat,
     loadChat,
     deleteChat,
-    
+
     // Image generation
     generateImage,
-    
+
     // Model info
     tinyllamaInfo: { name: 'TinyLlama-1.1B-Chat-v1.0', isAvailable: true },
     geminiInfo: { name: 'Gemini 1.5 Flash', isAvailable: true }

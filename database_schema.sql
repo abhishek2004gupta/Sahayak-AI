@@ -43,3 +43,5 @@ CREATE TABLE generated_images (
 CREATE INDEX idx_chats_user_id ON chats(user_id);
 CREATE INDEX idx_messages_chat_id ON messages(chat_id);
 CREATE INDEX idx_images_chat_id ON generated_images(chat_id); 
+
+   ALTER TABLE generated_images ALTER COLUMN image_path TYPE TEXT;
